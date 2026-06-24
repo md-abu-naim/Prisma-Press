@@ -3,14 +3,14 @@ import bcrypt from "bcryptjs";
 import config from "../../config";
 import { IRegisterUser } from "./user.interface";
 
-const registerUserIntoDB = async(payload: IRegisterUser) => {
-    const {name, email, password, profilePhoto} = payload
+const registerUserIntoDB = async (payload: IRegisterUser) => {
+    const { name, email, password, profilePhoto } = payload
 
     const isUserExists = await prisma.user.findUnique({
-        where: {email}
+        where: { email }
     })
 
-    if(isUserExists){
+    if (isUserExists) {
         throw new Error('User with this email already exists')
     }
 
