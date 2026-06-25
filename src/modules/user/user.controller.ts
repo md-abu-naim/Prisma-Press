@@ -1,4 +1,4 @@
-import { NextFunction, request, Request, RequestHandler, response, Response } from "express";
+import { NextFunction, Request, RequestHandler, response, Response } from "express";
 import httpStatus from "http-status";
 import { userService } from "./user.service";
 import { catchAsync } from "../../utils/catchAsync";
@@ -41,7 +41,7 @@ const registerUser = catchAsync(async (req: Request, res: Response, next: NextFu
     //     message: 'User registered successfully',
     //     data: { user }
     // })
-    
+
     sendResponse(res, {
         success: true,
         statusCode: httpStatus.CREATED,
