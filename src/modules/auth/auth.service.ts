@@ -1,20 +1,24 @@
 import bcrypt from "bcryptjs"
 import { prisma } from "../../lib/prisma"
 import { ILoginUser } from "./auth.interface"
-import  jwt, { SignOptions }  from "jsonwebtoken"
+import { SignOptions } from "jsonwebtoken"
 import config from "../../config"
 import { jwtUtils } from "../../utils/jwt"
 
 const loginUserIntoDB = async (payload: ILoginUser) => {
-    const {email, password} = payload
+    const { email, password } = payload
 
     const user = await prisma.user.findUniqueOrThrow({
-        where: {email}
+        where: { email }
     })
+
+    if (user.activeStatus === "BLOCEKD") {
+        throw new Error('Your account has been blocked. Pleas contact support')
+    }
 
     const isMatchedPassword = await bcrypt.compare(password, user.password)
 
-    if(!isMatchedPassword) {
+    if (!isMatchedPassword) {
         throw new Error('Password is incorrect')
     }
 
@@ -33,7 +37,7 @@ const loginUserIntoDB = async (payload: ILoginUser) => {
     const refreshToken = jwtUtils.createToken(jwtPayload, config.jwt_refresh_secret, config.jwt_refresh_expires_in as SignOptions)
 
 
-    return {accessToken, refreshToken}
+    return { accessToken, refreshToken }
 }
 
 export const authService = {
