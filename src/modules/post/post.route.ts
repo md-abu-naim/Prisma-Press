@@ -11,7 +11,7 @@ router.get('/', postController.getAllPost)
 
 router.get('/stats', auth(Role.ADMIN), postController.getPostStats)
 
-router.get('/my-stats', auth(Role.ADMIN, Role.AUTHOR, Role.USER), postController.getMyStats)
+router.get('/my-posts', auth(Role.ADMIN, Role.AUTHOR, Role.USER), postController.getMyPosts)
 
 router.get('/:postId', postController.getPostById)
 
