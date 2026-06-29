@@ -48,7 +48,20 @@ const getPostById = catchAsync(async(req: Request, res: Response, next: NextFunc
 })
 
 const updatePost = catchAsync(async(req: Request, res: Response, next: NextFunction) => {
-    
+    const authorId = req.user?.id
+    const postId = req.params.id
+    const payload = req.body
+    const isAdmin = req.user?.role === 'ADMIN'
+    console.log(isAdmin, payload);
+
+    const result = await postService.updatePostIntoDB(postId as string, payload, authorId as string, isAdmin)
+
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.OK,
+        message: 'Post Updated Successfully',
+        data: { result }
+    })
 })
 
 const deletePost = catchAsync(async(req: Request, res: Response, next: NextFunction) => {

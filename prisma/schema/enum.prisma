@@ -1,9 +1,9 @@
-enum ActiveStatus{
+enum ActiveStatus {
     ACTIVE
     BLOCEKD
 }
 
-enum Role{
+enum Role {
     USER
     AUTHOR
     ADMIN
