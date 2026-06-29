@@ -62,7 +62,7 @@ const updatePostIntoDB = async (postId: string, payload: IUpdatePostPayload, aut
         }
     })
 
-    if(!isAdmin && post.authorId=== authorId){
+    if (!isAdmin && post.authorId === authorId) {
         throw new Error("You are not the owner of this post!")
     }
 
@@ -84,8 +84,24 @@ const updatePostIntoDB = async (postId: string, payload: IUpdatePostPayload, aut
     return result
 }
 
-const deletePostIntoDB = async () => {
+const deletePostIntoDB = async (postId: string, authorId: string, isAdmin: boolean) => {
+    const post = await prisma.post.findUniqueOrThrow({
+        where: {
+            id: postId
+        }
+    })
 
+    if (!isAdmin && post.authorId === authorId) {
+        throw new Error("You are not the owner of this post!")
+    }
+
+    const result = await prisma.post.delete({
+        where: {
+            id: postId
+        }
+    })
+
+    return null
 }
 
 const getPostStatsFromDB = async () => {

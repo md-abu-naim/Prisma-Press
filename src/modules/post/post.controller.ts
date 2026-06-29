@@ -49,10 +49,9 @@ const getPostById = catchAsync(async(req: Request, res: Response, next: NextFunc
 
 const updatePost = catchAsync(async(req: Request, res: Response, next: NextFunction) => {
     const authorId = req.user?.id
-    const postId = req.params.id
+    const postId = req.params.postId
     const payload = req.body
     const isAdmin = req.user?.role === 'ADMIN'
-    console.log(isAdmin, payload);
 
     const result = await postService.updatePostIntoDB(postId as string, payload, authorId as string, isAdmin)
 
@@ -65,7 +64,18 @@ const updatePost = catchAsync(async(req: Request, res: Response, next: NextFunct
 })
 
 const deletePost = catchAsync(async(req: Request, res: Response, next: NextFunction) => {
-    
+    const authorId = req.user?.id
+    const postId = req.params.postId
+    const isAdmin = req.user?.role === 'ADMIN'
+
+    await postService.deletePostIntoDB(postId as string, authorId as string, isAdmin)
+
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.OK,
+        message: 'Post Deleted Successfully',
+        data: null
+    })
 })
 
 
