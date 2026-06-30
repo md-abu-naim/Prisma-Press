@@ -4,7 +4,7 @@ import { postService } from "./post.service"
 import { sendResponse } from "../../utils/sendResponse"
 import httpStatus from "http-status";
 
-const createPost = catchAsync(async(req: Request, res: Response, next: NextFunction) => {
+const createPost = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const id = req.user?.id
 
     const payload = req.body
@@ -19,7 +19,7 @@ const createPost = catchAsync(async(req: Request, res: Response, next: NextFunct
     })
 })
 
-const getAllPost = catchAsync(async(req: Request, res: Response, next: NextFunction) => {
+const getAllPost = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const posts = await postService.getAllPostFromDB()
 
     sendResponse(res, {
@@ -30,10 +30,10 @@ const getAllPost = catchAsync(async(req: Request, res: Response, next: NextFunct
     })
 })
 
-const getPostById = catchAsync(async(req: Request, res: Response, next: NextFunction) => {
+const getPostById = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const postId = req.params.postId
 
-    if(!postId){
+    if (!postId) {
         throw new Error('Post Id Requred in Params')
     }
 
@@ -47,7 +47,7 @@ const getPostById = catchAsync(async(req: Request, res: Response, next: NextFunc
     })
 })
 
-const updatePost = catchAsync(async(req: Request, res: Response, next: NextFunction) => {
+const updatePost = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const authorId = req.user?.id
     const postId = req.params.postId
     const payload = req.body
@@ -63,7 +63,7 @@ const updatePost = catchAsync(async(req: Request, res: Response, next: NextFunct
     })
 })
 
-const deletePost = catchAsync(async(req: Request, res: Response, next: NextFunction) => {
+const deletePost = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const authorId = req.user?.id
     const postId = req.params.postId
     const isAdmin = req.user?.role === 'ADMIN'
@@ -79,11 +79,11 @@ const deletePost = catchAsync(async(req: Request, res: Response, next: NextFunct
 })
 
 
-const getPostStats = catchAsync(async(req: Request, res: Response, next: NextFunction) => {
-    
+const getPostStats = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+
 })
 
-const getMyPosts = catchAsync(async(req: Request, res: Response, next: NextFunction) => {
+const getMyPosts = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const authorId = req.user?.id
 
     const posts = await postService.getMyPostsFromDB(authorId as string)
@@ -96,7 +96,7 @@ const getMyPosts = catchAsync(async(req: Request, res: Response, next: NextFunct
     })
 })
 
-export const postController ={
+export const postController = {
     createPost, getAllPost, getPostById, getPostStats,
     updatePost, deletePost, getMyPosts
 }
