@@ -1,4 +1,4 @@
-import { CommentStatus } from "../../../generated/prisma/enums"
+import { CommentStatus, PostStatus } from "../../../generated/prisma/enums"
 import { prisma } from "../../lib/prisma"
 import { ICreatePostPayload, IUpdatePostPayload } from "./post.interface"
 
@@ -21,6 +21,9 @@ const getAllPostFromDB = async () => {
                 }
             },
             comments: true
+        },
+        orderBy: {
+            createdAt: "desc"
         }
     })
 
@@ -159,7 +162,64 @@ const deletePostIntoDB = async (postId: string, authorId: string, isAdmin: boole
 }
 
 const getPostStatsFromDB = async () => {
+    const tracnsactionResult = await prisma.$transaction(async(tx) => {
+        const totalPosts = await tx.post.count()
 
+        const totalPublishedPosts = await tx.post.count({
+            where: {
+                status: PostStatus.PUBLISHED
+            }
+        })
+
+        const totalDraftPosts = await tx.post.count({
+            where: {
+                status: PostStatus.DRAFT
+            }
+        })
+
+        const totalArchivedPosts = await tx.post.count({
+            where: {
+                status: PostStatus.ARCHIVED
+            }
+        })
+
+        const totalComments = await tx.comment.count()
+
+        const totalApprovedComments = await tx.comment.count({
+            where: {
+                status: CommentStatus.APPROVED
+            }
+        })
+
+        const totalRejectComments = await tx.comment.count({
+            where: {
+                status: CommentStatus.REJECT
+            }
+        })
+
+        // const allPosts = await tx.post.findMany()
+
+        // let totalPostsViews = 0
+
+        // allPosts.forEach((post) => {
+        //     totalPostsViews = totalPostsViews + post.views
+        // })
+
+        const totalPostsViewsAggregation = await tx.post.aggregate({
+            _sum: {
+                views: true
+            }
+        })
+
+        const totalPostsViews = totalPostsViewsAggregation._sum.views
+
+        return {
+            totalPosts, totalPublishedPosts, totalArchivedPosts, totalDraftPosts,
+            totalComments, totalApprovedComments, totalRejectComments, totalPostsViews
+        }
+    })
+
+    return tracnsactionResult
 }
 
 const getMyPostsFromDB = async (authorId: string) => {
