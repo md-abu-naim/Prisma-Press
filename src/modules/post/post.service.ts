@@ -63,31 +63,42 @@ const getAllPostFromDB = async () => {
         // },
 
         // Filtering & searching combing
-        where: {
-            AND: [
-                {
-                    // searching
-                    OR: [
-                        {
-                            title: {
-                                contains: "title",
-                                mode: 'insensitive'
-                            },
-                            content: {
-                                contains: 'content',
-                                mode: 'insensitive'
-                            }
-                        }
-                    ]
-                },
-                {
-                    title: 'This is my fourth title '
-                },
-                {
-                    content: 'This is fourth content'
-                }
-            ]
-        },
+        // where: {
+        //     AND: [
+        //         {
+        //             // searching
+        //             OR: [
+        //                 {
+        //                     title: {
+        //                         contains: "title",
+        //                         mode: 'insensitive'
+        //                     },
+        //                     content: {
+        //                         contains: 'content',
+        //                         mode: 'insensitive'
+        //                     }
+        //                 }
+        //             ]
+        //         },
+        //         {
+        //             title: 'This is my fourth title '
+        //         },
+        //         {
+        //             content: 'This is fourth content'
+        //         }
+        //     ]
+        // },
+
+        // Pagination
+        // take: 1,
+        // skip: 1,
+
+        // sorting
+        // orderBy: {
+        //     title: 'asc',
+        //     content: 'desc'
+        // },
+
         include: {
             author: {
                 omit: {
