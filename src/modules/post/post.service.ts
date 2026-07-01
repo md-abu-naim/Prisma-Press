@@ -1,6 +1,6 @@
 import { CommentStatus, PostStatus } from "../../../generated/prisma/enums"
 import { prisma } from "../../lib/prisma"
-import { ICreatePostPayload, IUpdatePostPayload } from "./post.interface"
+import { ICreatePostPayload, IPostQuery, IUpdatePostPayload } from "./post.interface"
 
 const createPostIntoDB = async (payload: ICreatePostPayload, userId: string) => {
     const result = await prisma.post.create({
@@ -12,7 +12,13 @@ const createPostIntoDB = async (payload: ICreatePostPayload, userId: string) => 
     return result
 }
 
-const getAllPostFromDB = async () => {
+const getAllPostFromDB = async (query: IPostQuery) => {
+    const limit = query.limit ? Number(query.limit) : 10
+    const page = query.page ? Number(query.page) : 1
+    const skip = (page - 1) * limit
+    const sortBy = query.sortBy ? query.sortBy : "createdAt"
+    const sortOrder = query.sortOrder ? query.sortOrder : 'desc'
+
     const posts = await prisma.post.findMany({
         // filtering / exact match without AND oparetor
         // where: {
@@ -99,6 +105,43 @@ const getAllPostFromDB = async () => {
         //     content: 'desc'
         // },
 
+        where: {
+            AND: [
+                query.searchTerm ? {
+                    OR: [
+                        {
+                            title: {
+                                contains: query.searchTerm,
+                                mode: 'insensitive'
+                            }
+
+                        },
+                        {
+                            content: {
+                                contains: query.searchTerm,
+                                mode: 'insensitive'
+                            },
+                        }
+                    ]
+                } : {},
+
+                // title filtering
+                query.title ? { title: query.title } : {},
+
+                // content filterign
+                query.content ? { content: query.content } : {}
+            ]
+        },
+
+        // Pagination
+        take: limit,
+        skip: skip,
+
+        // Sorting
+        orderBy: {
+            [sortBy]: sortOrder
+        },
+
         include: {
             author: {
                 omit: {
@@ -106,9 +149,6 @@ const getAllPostFromDB = async () => {
                 }
             },
             comments: true
-        },
-        orderBy: {
-            createdAt: "desc"
         }
     })
 

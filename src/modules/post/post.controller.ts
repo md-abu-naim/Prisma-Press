@@ -20,7 +20,9 @@ const createPost = catchAsync(async (req: Request, res: Response, next: NextFunc
 })
 
 const getAllPost = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const posts = await postService.getAllPostFromDB()
+    const query = req.query
+    
+    const posts = await postService.getAllPostFromDB(query)
 
     sendResponse(res, {
         success: true,
