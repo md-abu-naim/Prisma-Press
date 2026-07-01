@@ -14,13 +14,77 @@ const createPostIntoDB = async (payload: ICreatePostPayload, userId: string) => 
 
 const getAllPostFromDB = async () => {
     const posts = await prisma.post.findMany({
+        // filtering / exact match without AND oparetor
+        // where: {
+        //     title: "This is my fourth title ",
+        //     content: "This is fourth content"
+        // }
+
+        // filtering / exact match with AND oparetor
+        // where: {
+        //     AND: [
+        //         {
+        //             title: "This is my fourth title "
+        //         },
+        //         {
+        //             content: "This is fourth content"
+        //         }
+        //     ]
+        // },
+
+        // Searching / partial match without OR oparetor
+        // where: {
+        //     title: {
+        //         contains: 'title',
+        //         mode: 'insensitive'
+        //     },
+        //     content: {
+        //         contains: 'content',
+        //         mode: 'insensitive'
+        //     }
+        // },
+
+        // Searching / partial match without OR oparetor 
+        // where: {
+        //     OR: [
+        //         {
+        //             title: {
+        //                 contains: 'content',
+        //                 mode: 'insensitive'
+        //             }
+        //         },
+        //         {
+        //             content: {
+        //                 contains: 'content',
+        //                 mode: 'insensitive'
+        //             }
+        //         }
+        //     ]
+        // },
+
+        // Filtering & searching combing
         where: {
             AND: [
                 {
-                    title: "This is my fourth title "
+                    // searching
+                    OR: [
+                        {
+                            title: {
+                                contains: "title",
+                                mode: 'insensitive'
+                            },
+                            content: {
+                                contains: 'content',
+                                mode: 'insensitive'
+                            }
+                        }
+                    ]
                 },
                 {
-                    content: "This is fourth content"
+                    title: 'This is my fourth title '
+                },
+                {
+                    content: 'This is fourth content'
                 }
             ]
         },
@@ -276,7 +340,7 @@ const getPostStatsFromDB = async () => {
         return {
             totalPosts, totalPublishedPosts, totalArchivedPosts, totalDraftPosts,
             totalComments, totalApprovedComments, totalRejectComments,
-             totalPostsViews: totalPostsViewsAggregation._sum.views
+            totalPostsViews: totalPostsViewsAggregation._sum.views
         }
     })
 
