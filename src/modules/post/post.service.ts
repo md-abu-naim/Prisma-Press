@@ -1,6 +1,7 @@
 import { CommentStatus, PostStatus } from "../../../generated/prisma/enums"
 import { prisma } from "../../lib/prisma"
 import { ICreatePostPayload, IPostQuery, IUpdatePostPayload } from "./post.interface"
+import { PostWhereInput } from "../../../generated/prisma/models";
 
 const createPostIntoDB = async (payload: ICreatePostPayload, userId: string) => {
     const result = await prisma.post.create({
@@ -18,6 +19,50 @@ const getAllPostFromDB = async (query: IPostQuery) => {
     const skip = (page - 1) * limit
     const sortBy = query.sortBy ? query.sortBy : "createdAt"
     const sortOrder = query.sortOrder ? query.sortOrder : 'desc'
+    const tags = query.tags ? JSON.parse(query.tags as string ) : null
+    const tagsArray = Array.isArray(tags) ? tags : []
+
+    const andConditions: PostWhereInput[] = []
+
+    if (query.searchTerm) {
+        andConditions.push({
+            OR: [
+                {
+                    title: {
+                        contains: query.searchTerm,
+                        mode: 'insensitive'
+                    }
+
+                },
+                {
+                    content: {
+                        contains: query.searchTerm,
+                        mode: 'insensitive'
+                    },
+                }
+            ]
+        })
+    }
+
+    if(query.title){
+        andConditions.push({
+            title: query.title
+        }) 
+    }
+
+    if(query.content){
+        andConditions.push({
+            content: query.content
+        })
+    }
+
+    if(query.tags){
+        andConditions.push({
+            tags: {
+                hasSome: tagsArray
+            }
+        })
+    }
 
     const posts = await prisma.post.findMany({
         // filtering / exact match without AND oparetor
@@ -105,35 +150,40 @@ const getAllPostFromDB = async (query: IPostQuery) => {
         //     content: 'desc'
         // },
 
+        // Dynamic filtering, sorting, searchig
+        // where: {
+        //     AND: [
+        //         query.searchTerm ? {
+        //             OR: [
+        //                 {
+        //                     title: {
+        //                         contains: query.searchTerm,
+        //                         mode: 'insensitive'
+        //                     }
+
+        //                 },
+        //                 {
+        //                     content: {
+        //                         contains: query.searchTerm,
+        //                         mode: 'insensitive'
+        //                     },
+        //                 }
+        //             ]
+        //         } : {},
+
+        //         // title filtering
+        //         query.title ? { title: query.title } : {},
+
+        //         // content filterign
+        //         query.content ? { content: query.content } : {}
+        //     ]
+        // },
+
         where: {
-            AND: [
-                query.searchTerm ? {
-                    OR: [
-                        {
-                            title: {
-                                contains: query.searchTerm,
-                                mode: 'insensitive'
-                            }
-
-                        },
-                        {
-                            content: {
-                                contains: query.searchTerm,
-                                mode: 'insensitive'
-                            },
-                        }
-                    ]
-                } : {},
-
-                // title filtering
-                query.title ? { title: query.title } : {},
-
-                // content filterign
-                query.content ? { content: query.content } : {}
-            ]
+            AND: andConditions
         },
 
-        // Pagination
+        // Dynamic Pagination
         take: limit,
         skip: skip,
 
