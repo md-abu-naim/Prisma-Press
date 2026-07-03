@@ -37,7 +37,7 @@ const createCheckoutSessionIntoDB = async (userId: string) => {
             payment_method_types: ["card"],
             success_url: `${config.app_url}/premium?success=true`,
             cancel_url: `${config.app_url}/payment/success=false`,
-            metadata: {userId: user.id}
+            metadata: { userId: user.id }
         })
 
         return session.url
