@@ -7,4 +7,6 @@ const router = Router()
 
 router.post('/checkout', auth(Role.ADMIN, Role.AUTHOR, Role.USER), subscriptionController.createCheckout)
 
+router.post('/webhook', subscriptionController.handleWebhook)
+
 export const subscriptionRouter = router
