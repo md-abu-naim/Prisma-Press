@@ -9,5 +9,7 @@ router.post('/checkout', auth(Role.ADMIN, Role.AUTHOR, Role.USER), subscriptionC
 
 router.post("/webhook", subscriptionController.handleWebhook)
 
+router.get('/stats',auth(Role.ADMIN, Role.AUTHOR, Role.USER), subscriptionController.getSubscriptionStats)
+
 
 export const subscriptionRouter = router

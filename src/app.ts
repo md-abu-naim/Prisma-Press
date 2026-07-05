@@ -11,6 +11,7 @@ import { globalErrorHandler } from "./middleware/globalErrorHandler";
 import { subscriptionRouter } from "./modules/subscription/subscription.route";
 import { stripe } from "./lib/stripe";
 import { subscriptionController } from "./modules/subscription/subscription.controller";
+import { premiumRouter } from "./modules/premium/premium.route";
 
 const app: Application = express()
 
@@ -39,6 +40,8 @@ app.use('/api/posts', postRouter)
 app.use('/api/comments', commentRouter)
 
 app.use('/api/subscription', subscriptionRouter)
+
+app.use('/api/premium', premiumRouter)
 
 app.use(notFound)
 
