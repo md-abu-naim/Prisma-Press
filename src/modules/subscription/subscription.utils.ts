@@ -67,7 +67,7 @@ export const handleChangeSubscription = async (payload: Stripe.Subscription) => 
         }
     })
 
-    if(!isSubscriptionExists){
+    if (!isSubscriptionExists) {
         console.log(`Webhook: No subscription found for subscription id: ${stripeSubscriptionId}`);
         return
     }
