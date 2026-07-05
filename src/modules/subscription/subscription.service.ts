@@ -1,3 +1,4 @@
+import Stripe from "stripe"
 import config from "../../config"
 import { prisma } from "../../lib/prisma"
 import { stripe } from "../../lib/stripe"
@@ -48,10 +49,11 @@ const createCheckoutSessionIntoDB = async (userId: string) => {
     }
 }
 
+
 const handleWebhookFromStripe = async (payload: Buffer, signature: string) => {
     const endpointSecret = config.stripe_webhook_secret
 
-    const event = stripe.webhooks.constructEvent(
+    const event = Stripe.webhooks.constructEvent(
         payload,
         signature,
         endpointSecret
@@ -59,7 +61,7 @@ const handleWebhookFromStripe = async (payload: Buffer, signature: string) => {
 
     switch (event.type) {
         case 'checkout.session.completed':
-            // const paymentObject = event.data.object;
+            await handleCheckoutCompleted(event.data.object)
 
             break;
         case 'customer.subscription.updated':
@@ -74,6 +76,44 @@ const handleWebhookFromStripe = async (payload: Buffer, signature: string) => {
             console.log(`No event match. Unhandled event type ${event.type}.`);
             break
     }
+}
+
+const getPeriodEnd = async(payload: Stripe.Subscription) => {
+    const currentPeriodEndInSecond = payload.items.data[0]?.current_period_end!
+    const currentPeriodEnd = new Date(currentPeriodEndInSecond * 100)
+
+    return currentPeriodEnd
+}
+
+const handleCheckoutCompleted = async (session: Stripe.Checkout.Session) => {
+    const userId = session.metadata?.userId
+    const stripeCustomerId = session.customer as string
+    const stripeSubscriptionId = session.subscription as string
+
+    if (!userId || !stripeCustomerId || !stripeSubscriptionId) {
+        throw new Error('Webhook failed')
+    }
+
+    const stripeSubscription = await stripe.subscriptions.retrieve(stripeSubscriptionId)
+
+    getPeriodEnd(stripeSubscription)
+
+    await prisma.subscription.upsert({
+        where: {
+            userId
+        },
+        create: {
+            userId,
+            stripeCustomerId,
+            stripeSubscriptionId,
+            currentPeriodEnd
+        },
+        update: {
+            stripeCustomerId,
+            stripeSubscriptionId,
+            currentPeriodEnd
+        }
+    })
 }
 
 export const subscriptionService = {
