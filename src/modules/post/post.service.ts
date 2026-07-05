@@ -4,6 +4,20 @@ import { ICreatePostPayload, IPostQuery, IUpdatePostPayload } from "./post.inter
 import { PostWhereInput } from "../../../generated/prisma/models";
 
 const createPostIntoDB = async (payload: ICreatePostPayload, userId: string) => {
+    const user = await prisma.user.findUniqueOrThrow({
+        where: {
+            id: userId
+        },
+        include: {
+            subscription: true
+        }
+    })
+
+    if (payload.isPremium && user.subscription?.status !== 'ACTIVE') {
+        throw new Error('You are not subscribed')
+    }
+
+
     const result = await prisma.post.create({
         data: {
             ...payload,
@@ -19,7 +33,7 @@ const getAllPostFromDB = async (query: IPostQuery) => {
     const skip = (page - 1) * limit
     const sortBy = query.sortBy ? query.sortBy : "createdAt"
     const sortOrder = query.sortOrder ? query.sortOrder : 'desc'
-    const tags = query.tags ? JSON.parse(query.tags as string ) : null
+    const tags = query.tags ? JSON.parse(query.tags as string) : null
     const tagsArray = Array.isArray(tags) ? tags : []
 
     const andConditions: PostWhereInput[] = []
@@ -44,25 +58,29 @@ const getAllPostFromDB = async (query: IPostQuery) => {
         })
     }
 
-    if(query.title){
+    if (query.title) {
         andConditions.push({
             title: query.title
-        }) 
+        })
     }
 
-    if(query.content){
+    if (query.content) {
         andConditions.push({
             content: query.content
         })
     }
 
-    if(query.tags){
+    if (query.tags) {
         andConditions.push({
             tags: {
                 hasSome: tagsArray
             }
         })
     }
+
+    andConditions.push({
+        isPremium: false
+    })
 
     const posts = await prisma.post.findMany({
         // filtering / exact match without AND oparetor
@@ -202,7 +220,21 @@ const getAllPostFromDB = async (query: IPostQuery) => {
         }
     })
 
-    return posts
+    const totalPostsCount = await prisma.post.count({
+        where: {
+            AND: andConditions
+        }
+    })
+
+    return {
+        data: posts,
+        meta: {
+            page: page,
+            limit: limit,
+            total: totalPostsCount,
+            totalPages: Math.ceil(totalPostsCount / limit)
+        }
+    }
 }
 
 const getPostByIdFromDB = async (postId: string) => {
@@ -257,7 +289,8 @@ const getPostByIdFromDB = async (postId: string) => {
 
         const post = await tx.post.findUniqueOrThrow({
             where: {
-                id: postId
+                id: postId,
+                isPremium: false
             },
             include: {
                 author: {
