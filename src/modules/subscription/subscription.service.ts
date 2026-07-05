@@ -2,8 +2,12 @@ import Stripe from "stripe"
 import config from "../../config"
 import { prisma } from "../../lib/prisma"
 import { stripe } from "../../lib/stripe"
+import strict from "node:assert/strict"
+import { SubscriptionStatus } from "../../../generated/prisma/enums"
+import { handleChangeSubscription, handleCheckoutCompleted } from "./subscription.utils"
 
 const createCheckoutSessionIntoDB = async (userId: string) => {
+
     const transectionResult = await prisma.$transaction(async (tx) => {
         const user = await tx.user.findUniqueOrThrow({
             where: {
@@ -49,73 +53,51 @@ const createCheckoutSessionIntoDB = async (userId: string) => {
     }
 }
 
-
-const handleWebhookFromStripe = async (payload: Buffer, signature: string) => {
+const handleWebhook = async (payload: Buffer, signature: string) => {
     const endpointSecret = config.stripe_webhook_secret
-
-    const event = Stripe.webhooks.constructEvent(
+    const event = stripe.webhooks.constructEvent(
         payload,
         signature,
         endpointSecret
     );
 
+
+    // Handle the event
     switch (event.type) {
         case 'checkout.session.completed':
+            console.log("Checkout Completed");
+            //Occurs when a Checkout Session has been successfully completed.
+            // event.data.object
             await handleCheckoutCompleted(event.data.object)
 
             break;
         case 'customer.subscription.updated':
-            // const paymentObject = event.data.object;
-            // Then define and call a method to handle the successful attachment of a PaymentMethod.
-            // handlePaymentMethodAttached(paymentMethod);
+            //Occurs whenever a subscription changes (e.g., switching from one plan to another, or changing the status from trial to active).
+            await handleChangeSubscription(event.data.object)
             break;
+
+        /*
+        To test this run this command in terminal 
+        stripe subscriptions cancel sub_1PsYourSubIdHere (paste existinmg subscribed sub id)
+        */
+
         case 'customer.subscription.deleted':
-            break
+            //Occurs whenever a customer’s subscription ends
+            await handleChangeSubscription(event.data.object)
+            break;
+
+        /*
+       To test this run this command in terminal 
+       stripe subscriptions cancel sub_1PsYourSubIdHere (paste existinmg subscribed sub id)
+       */
+
         default:
             // Unexpected event type
-            console.log(`No event match. Unhandled event type ${event.type}.`);
-            break
+            console.log(`No events matched. Unhandled event type ${event.type}.`);
+            break;
     }
-}
-
-const getPeriodEnd = async(payload: Stripe.Subscription) => {
-    const currentPeriodEndInSecond = payload.items.data[0]?.current_period_end!
-    const currentPeriodEnd = new Date(currentPeriodEndInSecond * 100)
-
-    return currentPeriodEnd
-}
-
-const handleCheckoutCompleted = async (session: Stripe.Checkout.Session) => {
-    const userId = session.metadata?.userId
-    const stripeCustomerId = session.customer as string
-    const stripeSubscriptionId = session.subscription as string
-
-    if (!userId || !stripeCustomerId || !stripeSubscriptionId) {
-        throw new Error('Webhook failed')
-    }
-
-    const stripeSubscription = await stripe.subscriptions.retrieve(stripeSubscriptionId)
-
-    getPeriodEnd(stripeSubscription)
-
-    await prisma.subscription.upsert({
-        where: {
-            userId
-        },
-        create: {
-            userId,
-            stripeCustomerId,
-            stripeSubscriptionId,
-            currentPeriodEnd
-        },
-        update: {
-            stripeCustomerId,
-            stripeSubscriptionId,
-            currentPeriodEnd
-        }
-    })
 }
 
 export const subscriptionService = {
-    createCheckoutSessionIntoDB, handleWebhookFromStripe
+    createCheckoutSessionIntoDB, handleWebhook
 }
