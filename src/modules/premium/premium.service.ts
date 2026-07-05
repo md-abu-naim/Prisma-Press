@@ -52,10 +52,29 @@ const getPremiumContent = async (query: IPostQuery) => {
         })
     }
 
+    andConditions.push({
+        isPremium: true
+    })
 
     const posts = await prisma.post.findMany({
         where: {
-            isPremium: true
+            AND: andConditions
+        },
+        take: limit,
+        skip: skip,
+
+        // Sorting
+        orderBy: {
+            [sortBy]: sortOrder
+        },
+
+        include: {
+            author: {
+                omit: {
+                    password: true
+                }
+            },
+            comments: true
         }
     })
 
@@ -65,7 +84,7 @@ const getPremiumContent = async (query: IPostQuery) => {
         }
     })
 
-     return {
+    return {
         data: posts,
         meta: {
             page: page,
